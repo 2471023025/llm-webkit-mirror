@@ -66,12 +66,24 @@ class TestPoliticalDetector:
     @patch('llm_web_kit.model.politics_detector.load_config')
     @patch('llm_web_kit.model.politics_detector.logger.info')
     @patch('llm_web_kit.model.politics_detector.import_transformer')
+    @patch('llm_web_kit.model.politics_detector.download_auto_file')
+    @patch('llm_web_kit.model.politics_detector.unzip_local_file')
+    @patch('llm_web_kit.model.politics_detector.os.path.exists')
+    @patch('llm_web_kit.model.politics_detector.load_config')
+    @patch('llm_web_kit.model.politics_detector.logger.info')
+    @patch('llm_web_kit.model.politics_detector.import_transformer')
     def test_auto_download(self, mock_import_transformer, mock_logger, mock_load_config,
                         mock_exists, mock_unzip, mock_download):
         # Setup mock behavior
-        # First few exists calls are for the transformer initialization
-        # Then False for unzip_path, False for zip_path
-        mock_exists.side_effect = [True, True, False, False]
+        # We'll use a side_effect function to handle different exists calls
+        def exists_side_effect(path):
+            if 'political-25m3_cpu' in path:
+                if path.endswith('.zip'):
+                    return False  # zip file doesn't exist
+                return False  # unzip dir doesn't exist
+            return True  # other paths (like cache dir) exist
+
+        mock_exists.side_effect = exists_side_effect
 
         mock_config = {
             'resources': {
@@ -86,34 +98,40 @@ class TestPoliticalDetector:
         mock_unzip.return_value = '/fake/unzip/path'
         mock_import_transformer.return_value = None  # Mock the transformer import
 
-        # We need to patch the PoliticalDetector.__init__ to avoid actual model loading
-        with patch.object(PoliticalDetector, '__init__', return_value=None):
-            detector = PoliticalDetector()
-            # Now manually set the attributes that would normally be set in __init__
-            detector.model = MagicMock()
-            detector.tokenizer = MagicMock()
+        # Create detector instance without calling real __init__
+        detector = PoliticalDetector.__new__(PoliticalDetector)
+        detector.model = MagicMock()
+        detector.tokenizer = MagicMock()
 
-            result = detector.auto_download()
+        result = detector.auto_download()
 
         # Assertions
         mock_load_config.assert_called_once()
-        # Check the important exists calls we care about
-        assert mock_exists.call_count >= 4
-        mock_logger.assert_any_call('try to make unzip_path: /fake/unzip/path exist')
-        mock_logger.assert_any_call('unzip_path: /fake/unzip/path does not exist')
-        mock_logger.assert_any_call('try to unzip from zip_path: /fake/cache/political-25m3_cpu.zip')
-        mock_logger.assert_any_call('zip_path: /fake/cache/political-25m3_cpu.zip does not exist')
+
+        # Verify the important exists calls
+        zip_path = '/fake/cache/political-25m3_cpu.zip'
+        unzip_path = '/fake/unzip/path'
+
+        # Check at least these two critical paths were checked
+        mock_exists.assert_any_call(unzip_path)
+        mock_exists.assert_any_call(zip_path)
+
+        mock_logger.assert_any_call(f'try to make unzip_path: {unzip_path} exist')
+        mock_logger.assert_any_call(f'unzip_path: {unzip_path} does not exist')
+        mock_logger.assert_any_call(f'try to unzip from zip_path: {zip_path}')
+        mock_logger.assert_any_call(f'zip_path: {zip_path} does not exist')
         mock_logger.assert_any_call('downloading s3://fake/path')
+
         mock_download.assert_called_once_with(
             's3://fake/path',
-            '/fake/cache/political-25m3_cpu.zip',
+            zip_path,
             'fake_md5'
         )
         mock_unzip.assert_called_once_with(
-            '/fake/cache/political-25m3_cpu.zip',
-            '/fake/unzip/path'
+            zip_path,
+            unzip_path
         )
-        assert result == '/fake/unzip/path'
+        assert result == unzip_path
 
 class TestGTEModel(TestCase):
     @patch('llm_web_kit.model.politics_detector.GTEModel.auto_download')
