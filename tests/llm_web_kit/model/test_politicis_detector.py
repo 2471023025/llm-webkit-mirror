@@ -65,11 +65,6 @@ class TestPoliticalDetector:
     @patch('llm_web_kit.model.politics_detector.os.path.exists')
     @patch('llm_web_kit.model.politics_detector.load_config')
     @patch('llm_web_kit.model.politics_detector.logger.info')
-    @patch('llm_web_kit.model.politics_detector.download_auto_file')
-    @patch('llm_web_kit.model.politics_detector.unzip_local_file')
-    @patch('llm_web_kit.model.politics_detector.os.path.exists')
-    @patch('llm_web_kit.model.politics_detector.load_config')
-    @patch('llm_web_kit.model.politics_detector.logger.info')
     @patch('llm_web_kit.model.politics_detector.import_transformer')
     def test_auto_download(self, mock_import_transformer, mock_logger, mock_load_config,
                         mock_exists, mock_unzip, mock_download):
@@ -91,8 +86,14 @@ class TestPoliticalDetector:
         mock_unzip.return_value = '/fake/unzip/path'
         mock_import_transformer.return_value = None  # Mock the transformer import
 
-        detector = PoliticalDetector()
-        result = detector.auto_download()
+        # We need to patch the PoliticalDetector.__init__ to avoid actual model loading
+        with patch.object(PoliticalDetector, '__init__', return_value=None):
+            detector = PoliticalDetector()
+            # Now manually set the attributes that would normally be set in __init__
+            detector.model = MagicMock()
+            detector.tokenizer = MagicMock()
+
+            result = detector.auto_download()
 
         # Assertions
         mock_load_config.assert_called_once()
