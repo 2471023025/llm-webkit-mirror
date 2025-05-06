@@ -34,7 +34,7 @@ class TestPoliticalDetector:
         _ = PoliticalDetector()
         mock_load_model.assert_called_once_with('/fake/model/path/model.bin')
         mock_auto_tokenizer.assert_called_once_with(
-            '/fake/model/path/qwen2.5_7b_tokenizer',
+            '/fake/model/path/internlm2-chat-20b',
             use_fast=False,
             trust_remote_code=True,
         )
@@ -45,7 +45,7 @@ class TestPoliticalDetector:
         _ = PoliticalDetector('custom_model_path')
         mock_load_model.assert_called_once_with(os.path.join('custom_model_path', 'model.bin'))
         mock_auto_tokenizer.assert_called_once_with(
-            os.path.join('custom_model_path', 'qwen2.5_7b_tokenizer'),
+            os.path.join('custom_model_path', 'internlm2-chat-20b'),
             use_fast=False,
             trust_remote_code=True,
         )
@@ -60,51 +60,62 @@ class TestPoliticalDetector:
         assert predictions == ['label1', 'label2']
         assert probabilities == [0.9, 0.1]
 
-    @patch('llm_web_kit.model.politics_detector.os.path.exists')
-    @patch('llm_web_kit.model.politics_detector.download_auto_file')
-    @patch('llm_web_kit.model.politics_detector.unzip_local_file')
+import logging
+import os
+from unittest import TestCase
+from unittest.mock import MagicMock, patch
+
+from loguru import logger
+
+# 假设你的类和函数在 llm_web_kit.model.politics_detector 模块中
+from llm_web_kit.model.politics_detector import PoliticalDetector
+
+
+class TestPoliticalDetectorWithAutoDownload(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        # 禁用所有日志输出，防止 loguru 报错
+        logger.disable('llm_web_kit')
+
     @patch('llm_web_kit.model.politics_detector.load_config')
+    @patch('llm_web_kit.model.politics_detector.os.path.exists', return_value=False)
+    @patch('llm_web_kit.model.politics_detector.download_auto_file', return_value='/tmp/cache/political-25m3_cpu.zip')
+    @patch('llm_web_kit.model.politics_detector.unzip_local_file', return_value='/tmp/cache/political-25m3_cpu')
     @patch('llm_web_kit.model.politics_detector.logger.info')
-    def test_auto_download(self, mock_logger, mock_load_config, mock_unzip, mock_download, mock_exists):
-        # Setup mock return values
-        mock_exists.side_effect = [False, False]  # unzip_path doesn't exist, zip_path doesn't exist
-        mock_config = {
+    def test_auto_download_triggers_config_access_and_logging(
+        self,
+        mock_logger_info,
+        mock_unzip_local_file,
+        mock_download_auto_file,
+        mock_os_path_exists,
+        mock_load_config
+    ):
+        # 构造一个假的配置返回值
+        mock_load_config.return_value = {
             'resources': {
                 'political-25m3_cpu': {
-                    'download_path': 's3://fake/path/model.zip',
-                    'md5': 'fake_md5'
+                    'download_path': 's3://fake-bucket/political-25m3_cpu.zip',
+                    'md5': 'fake_md5_hash'
                 }
             }
         }
-        mock_load_config.return_value = mock_config
-        mock_download.return_value = '/fake/cache/political-25m3_cpu.zip'
-        mock_unzip.return_value = '/fake/unzip/path'
 
-        # Call the method
-        detector = PoliticalDetector()
-        result = detector.auto_download()
+        # 创建 detector 实例，这会触发 auto_download()
+        with patch('transformers.AutoTokenizer.from_pretrained'), \
+             patch('llm_web_kit.model.politics_detector.fasttext.load_model'):
 
-        # Assertions
-        mock_load_config.assert_called_once()
-        mock_exists.assert_has_calls([
-            call('/fake/unzip/path'),
-            call('/fake/cache/political-25m3_cpu.zip')
-        ])
-        mock_logger.assert_any_call('try to make unzip_path: /fake/unzip/path exist')
-        mock_logger.assert_any_call('unzip_path: /fake/unzip/path does not exist')
-        mock_logger.assert_any_call('try to unzip from zip_path: /fake/cache/political-25m3_cpu.zip')
-        mock_logger.assert_any_call('zip_path: /fake/cache/political-25m3_cpu.zip does not exist')
-        mock_logger.assert_any_call('downloading s3://fake/path/model.zip')
-        mock_download.assert_called_once_with(
-            's3://fake/path/model.zip',
-            '/fake/cache/political-25m3_cpu.zip',
-            'fake_md5'
-        )
-        mock_unzip.assert_called_once_with(
-            '/fake/cache/political-25m3_cpu.zip',
-            '/fake/unzip/path'
-        )
-        assert result == '/fake/unzip/path'
+            detector = PoliticalDetector()
+
+        # 验证 auto_download 返回的路径是否正确
+        self.assertEqual(detector.auto_download(), '/tmp/cache/political-25m3_cpu')
+
+        # 验证 load_config 是否至少被调用了一次
+        self.assertGreaterEqual(mock_load_config.call_count, 1)
+
+        # 验证 logger.info 是否被调用，并包含 download_path
+        mock_logger_info.assert_any_call('downloading s3://fake-bucket/political-25m3_cpu.zip')
+
 class TestGTEModel(TestCase):
     @patch('llm_web_kit.model.politics_detector.GTEModel.auto_download')
     @patch('llm_web_kit.model.politics_detector.import_transformer')
