@@ -23,7 +23,7 @@ from llm_web_kit.model.politics_detector import (GTEModel, PoliticalDetector,
 from llm_web_kit.model.resource_utils import CACHE_DIR
 
 
-class TestPoliticalDetector:
+class TestPoliticalDetector(TestCase):
 
     @patch('transformers.AutoTokenizer.from_pretrained')
     @patch('llm_web_kit.model.politics_detector.fasttext.load_model')
@@ -34,7 +34,7 @@ class TestPoliticalDetector:
         _ = PoliticalDetector()
         mock_load_model.assert_called_once_with('/fake/model/path/model.bin')
         mock_auto_tokenizer.assert_called_once_with(
-            '/fake/model/path/internlm2-chat-20b',
+            '/fake/model/path/qwen2.5_7b_tokenizer',
             use_fast=False,
             trust_remote_code=True,
         )
@@ -45,7 +45,7 @@ class TestPoliticalDetector:
         _ = PoliticalDetector('custom_model_path')
         mock_load_model.assert_called_once_with(os.path.join('custom_model_path', 'model.bin'))
         mock_auto_tokenizer.assert_called_once_with(
-            os.path.join('custom_model_path', 'internlm2-chat-20b'),
+            os.path.join('custom_model_path', 'qwen2.5_7b_tokenizer'),
             use_fast=False,
             trust_remote_code=True,
         )
