@@ -123,7 +123,7 @@ print(update_language_by_str(text, is_cn_specific=True))
 
 ## 性能说明
 
-测试集路径：https://huggingface.co/facebook/fasttext-language-identification
+测试集路径：https://huggingface.co/datasets/gsarti/flores_101，该数据集包含102种语言的并行句子，每个语种2009条
 
 | 级联方案  |          | lid176   |          | lid218e   |          |
 | --------- | -------- | -------- | -------- | --------- | -------- |
@@ -194,3 +194,9 @@ print(update_language_by_str(text, is_cn_specific=True))
 |           |          | lit      | 2        |           |          |
 |           |          | lao      | 1        |           |          |
 |           |          | ckb      | 1        |           |          |
+
+该表统计了三种模型在102种语言上错误的次数，其中级联方案为lid218e级联lid176模型
+
+根据统计表格，lid176准确率0.7715，lid218e准确率为0.9817，级联方案准确率为0.9853
+
+级联方案相比于lid176提升了多语种的准确率，同时也解决了lid218e针对部分语种（中文简体、中文繁体、日语）的错误
