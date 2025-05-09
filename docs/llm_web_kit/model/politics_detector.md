@@ -2,7 +2,7 @@
 
 识别中文或英文文本中的涉政内容，目前包含了新旧两类接口，25m3_cpu模型接口接收单条数据，并返回该数据的涉政分数，分数接近1代表不涉政，分数接近0则代表涉政。目前25m3_cpu模型接口仅支持CPU模型。
 
-25m3模型接口检测结果以ModelResponse类返回，该类包含is_remained和details两个字段，其中is_remained代表数据是否需要保留，details则是一个包含涉政分数等详细信息的字典。25m3模型接口支持CPU和GPU两种模型。
+25m3模型接口检测结果以ModelResponse类返回，该类包含is_remained和details两个字段，其中is_remained代表数据是否需要保留，details则是一个包含涉政分数等详细信息的字典。25m3模型接口支持GPU模型。
 
 ## 配置文件需要改动的部分
 

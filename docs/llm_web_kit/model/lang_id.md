@@ -4,7 +4,7 @@
 
 is_218e为True时使用lid218e模型，在多个小语种中有更好的表现，除个别容易使模型混淆的情况外，会返回正常的language_details字段，若该参数为False，则language_details字段为空，默认值为True
 
-is_cn_specific为True时，会对文本中的中文文本进行细分，分为zho-Hans(简体中文)或zho-Hant(繁体中文)，结果在language_details字段中，默认值为False
+is_cn_specific为True时，会对文本中的中文文本进行细分，分为zho-Hans(简体中文)或zho-Hant(繁体中文),结果在language_details字段中，默认值为False,如果需要使用，请先pip install langdetect_zh==1.0.4,该package使用langdetect的方法,并针对中文具体版本进行了特调,能有效识别简体中文和繁体中文
 
 ## 配置文件需要改动的部分
 
@@ -123,7 +123,7 @@ print(update_language_by_str(text, is_cn_specific=True))
 
 ## 性能说明
 
-测试集路径：https://huggingface.co/datasets/gsarti/flores_101，该数据集包含102种语言的并行句子，每个语种2009条
+测试集使用gsarti/flores_101，该数据集包含102种语言的并行句子，每个语种2009条测试集路径：https://huggingface.co/datasets/gsarti/flores_101
 
 | 级联方案  |          | lid176   |          | lid218e   |          |
 | --------- | -------- | -------- | -------- | --------- | -------- |
@@ -195,7 +195,7 @@ print(update_language_by_str(text, is_cn_specific=True))
 |           |          | lao      | 1        |           |          |
 |           |          | ckb      | 1        |           |          |
 
-该表统计了三种模型在102种语言上错误的次数，其中级联方案为lid218e级联lid176模型
+该表统计了三种模型在102种语言上错误的次数，其中级联方案为lid218e级联lid176模型，在判断中文详细信息（简体和繁体）时使用langdetect_zh
 
 根据统计表格，lid176准确率0.7715，lid218e准确率为0.9817，级联方案准确率为0.9853
 
