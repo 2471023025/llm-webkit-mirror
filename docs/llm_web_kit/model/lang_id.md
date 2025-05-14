@@ -4,7 +4,7 @@
 
 is_218e为True时使用lid218e模型，在多个小语种中有更好的表现，除个别容易使模型混淆的情况外，会返回正常的language_details字段，若该参数为False，则language_details字段为空，默认值为True
 
-is_cn_specific为True时，会对文本中的中文文本进行细分，分为zho-Hans(简体中文)或zho-Hant(繁体中文),结果在language_details字段中，默认值为False,如果需要使用，请先pip install langdetect_zh==1.0.4,该package使用langdetect的方法,并针对中文具体版本进行了特调,能有效识别简体中文和繁体中文
+is_cn_specific为True时，会对文本中的中文文本进行细分，分为zho-Hans(简体中文)或zho-Hant(繁体中文),结果在language_details字段中，默认值为False,如果需要使用，请先pip install langdetect_zh==1.0.4,该package使用langdetect的方法,并针对中文进行了特调,能有效识别简体中文和繁体中文
 
 ## 配置文件需要改动的部分
 
