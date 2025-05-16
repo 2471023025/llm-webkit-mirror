@@ -125,6 +125,14 @@ print(update_language_by_str(text, is_cn_specific=True))
 
 测试集使用gsarti/flores_101，该数据集包含102种语言的并行句子，每个语种2009条测试集路径：https://huggingface.co/datasets/gsarti/flores_101
 
+下表所示lid176为单模型结果，模型路径为s3://web-parse-huawei/shared_resource/language/lid176.bin
+
+lid218e也为单模型结果，模型路径为s3://web-parse-huawei/shared_resource/language/lid218e.bin
+
+级联方案即为该代码调用方案，使用lid176判断zh, en, ja, ko，使用lid218e判断其他语种，使用langdetect_zh区分简体中文与繁体中文
+
+该表统计了三种模型在102种语言上错误的次数，其中lid176繁体中文全错是考虑到该模型无法区分简体中文和繁体中文
+
 | 级联方案  |          | lid176   |          | lid218e   |          |
 | --------- | -------- | -------- | -------- | --------- | -------- |
 | 真实语言  | 错误次数 | 真实语言 | 错误次数 | 真实语言  | 错误次数 |
@@ -195,8 +203,6 @@ print(update_language_by_str(text, is_cn_specific=True))
 |           |          | lao      | 1        |           |          |
 |           |          | ckb      | 1        |           |          |
 
-该表统计了三种模型在102种语言上错误的次数，其中级联方案为lid218e级联lid176模型，在判断中文详细信息（简体和繁体）时使用langdetect_zh
-
-根据统计表格，lid176准确率0.7715，lid218e准确率为0.9817，级联方案准确率为0.9853
+根据统计表格，lid176准确率0.7715，lid218e准确率为0.9817，级联方案准确率为0.9853，准确率公式为：1-sum(错误次数)/102\*2009
 
 级联方案相比于lid176提升了多语种的准确率，同时也解决了lid218e针对部分语种（中文简体、中文繁体、日语）的错误
